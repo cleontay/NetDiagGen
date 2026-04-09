@@ -5,24 +5,6 @@ const sampleData = {
 
 nodes: [
 
-"workstation1", label: "Admin PC", type: "workstation", :
-
-label: "Smart
-
-{ id: "workstation2", label: "Dev PC", type: "workstation", sta
-
-{ id: "iot1", Camera", type: "iot",
-
-status: "onli
-
-},
-
-"iot1" } },
-
-},
-
-],
-
 // Notice everything is wrapped in a "data" object
 
 { data: { id: "router1", label: "Main Router", type: "router", status: { data: { id: "server1", label: "Web Server", type: "server", status:
