@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Topology Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/cytoscape@3.25.0/dist/cytoscape.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 Network Topology Visualizer</h1>
+            <p>Upload JSON to visualize your network infrastructure</p>
+        </header>
+
+        <div class="controls">
+            <div class="upload-section">
+                <label for="fileUpload" class="upload-btn">
+                    📁 Upload JSON File
+                </label>
+                <input type="file" id="fileUpload" accept=".json" style="display: none;">
+                <button id="sampleBtn" class="sample-btn">📊 Load Sample Data</button>
+                <button id="resetBtn" class="reset-btn">🗑️ Clear Graph</button>
+            </div>
+            
+            <div class="view-controls">
+                <button id="zoomInBtn">🔍 Zoom In</button>
+                <button id="zoomOutBtn">🔍 Zoom Out</button>
+                <button id="fitBtn">🎯 Fit to Screen</button>
+                <button id="layoutGridBtn">📐 Grid Layout</button>
+                <button id="layoutCircleBtn">⚪ Circle Layout</button>
+            </div>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <span>📊 Nodes: <strong id="nodeCount">0</strong></span>
+            <span>🔗 Edges: <strong id="edgeCount">0</strong></span>
+            <span>✅ Online: <strong id="onlineCount">0</strong></span>
+            <span>❌ Offline: <strong id="offlineCount">0</strong></span>
+        </div>
+
+        <div id="cy" class="graph-container"></div>
+
+        <div class="legend">
+            <h3>Legend</h3>
+            <div class="legend-items">
+                <div><span class="legend-color" style="background: #4CAF50;"></span> Online</div>
+                <div><span class="legend-color" style="background: #f44336;"></span> Offline</div>
+                <div><span class="legend-color" style="background: #FF9800;"></span> Router</div>
+                <div><span class="legend-color" style="background: #2196F3;"></span> Server</div>
+                <div><span class="legend-color" style="background: #9C27B0;"></span> Workstation</div>
+                <div><span class="legend-color" style="background: #607D8B;"></span> IoT/Other</div>
+            </div>
+        </div>
+
+        <div class="node-info" id="nodeInfo">
+            <h3>📋 Node Details</h3>
+            <div id="infoContent">Click on any node to see details</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
