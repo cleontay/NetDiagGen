@@ -2,43 +2,25 @@ let cy = null;
 
 // Sample network data
 const sampleData = {
-
-nodes: [
-
-// Notice everything is wrapped in a "data" object
-
-{ data: { id: "router1", label: "Main Router", type: "router", status: { data: { id: "server1", label: "Web Server", type: "server", status:
-
-{ data: { id: "server2", label: "Database", type: "server", status: "or
-
-{ data: { id:
-
-{ data:
-
-{ data:
-
-{ data: { id: "iot2", label: "Smart Thermostat", type: "iot", status:
-
-edges: [
-
-{ data: { source: "router1", target: "server1" } },
-
-{
-
-data: { source: "router1", target: "server2" } },
-
-{ data: { source: "router1", target: "workstation1" } },
-
-{ data: { source: "router1", target: "workstation2" }
-
-{ data: { source: "router1", target:
-
-{ data: { source: "router1", target: "iot2" }
-
-{ data: { source: "server1", target: "server2" }
-
-}
-
+    nodes: [
+        // Notice everything is wrapped in a "data" object
+        { data: { id: "router1", label: "Main Router", type: "router", status: "online", ip: "192.168.1.1", model: "pfSense" } },
+        { data: { id: "server1", label: "Web Server", type: "server", status: "online", ip: "192.168.1.10", os: "Ubuntu 22.04" } },
+        { data: { id: "server2", label: "Database", type: "server", status: "online", ip: "192.168.1.11", os: "Debian 11" } },
+        { data: { id: "workstation1", label: "Admin PC", type: "workstation", status: "online", ip: "192.168.1.50", user: "admin" } },
+        { data: { id: "workstation2", label: "Dev PC", type: "workstation", status: "offline", ip: "192.168.1.51", user: "dev" } },
+        { data: { id: "iot1", label: "Smart Camera", type: "iot", status: "online", ip: "192.168.1.100" } },
+        { data: { id: "iot2", label: "Smart Thermostat", type: "iot", status: "offline", ip: "192.168.1.101" } }
+    ],
+    edges: [
+        { data: { source: "router1", target: "server1" } },
+        { data: { source: "router1", target: "server2" } },
+        { data: { source: "router1", target: "workstation1" } },
+        { data: { source: "router1", target: "workstation2" } },
+        { data: { source: "router1", target: "iot1" } },
+        { data: { source: "router1", target: "iot2" } },
+        { data: { source: "server1", target: "server2" } }
+    ]
 };
 
 // Node color mapping
