@@ -1,0 +1,164 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+header p {
+    opacity: 0.9;
+}
+
+.controls {
+    padding: 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.upload-section, .view-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+button, .upload-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: white;
+    border: 2px solid #667eea;
+    color: #667eea;
+}
+
+button:hover, .upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.sample-btn {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.reset-btn {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.stats-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    background: #e3f2fd;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 16px;
+}
+
+.stats-bar span {
+    font-weight: 500;
+}
+
+.graph-container {
+    width: 100%;
+    height: 600px;
+    background: #fafafa;
+    position: relative;
+}
+
+.legend {
+    padding: 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.legend h3 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.legend-items {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.legend-color {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.node-info {
+    padding: 20px;
+    background: white;
+}
+
+.node-info h3 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+#infoContent {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    min-height: 100px;
+}
+
+@media (max-width: 768px) {
+    .controls {
+        flex-direction: column;
+    }
+    
+    .graph-container {
+        height: 400px;
+    }
+    
+    .stats-bar {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+}
