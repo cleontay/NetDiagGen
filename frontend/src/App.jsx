@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import TopologyView from './components/TopologyView';
+import DashboardView from './components/DashboardView';
 import DeviceDetailPanel from './components/DeviceDetailPanel';
 import StatsBar from './components/StatsBar';
 import SourceLoader from './components/SourceLoader';
@@ -12,6 +13,7 @@ export default function App() {
   const [sourceLabel, setSourceLabel] = useState('Sample Data');
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [error, setError] = useState(null);
+  const [view, setView] = useState('topology');
   const controlsRef = useRef(null);
 
   const loadJSON = useCallback((jsonData, meta = {}) => {
@@ -47,11 +49,15 @@ export default function App() {
           <button className="reset-btn" onClick={handleReset}>
             Clear Graph
           </button>
-          <button onClick={() => controlsRef.current?.zoomIn()}>Zoom In</button>
-          <button onClick={() => controlsRef.current?.zoomOut()}>Zoom Out</button>
-          <button onClick={() => controlsRef.current?.fit()}>Fit to Screen</button>
-          <button onClick={() => controlsRef.current?.layoutGrid()}>Grid Layout</button>
-          <button onClick={() => controlsRef.current?.layoutCircle()}>Circle Layout</button>
+          {view === 'topology' && (
+            <>
+              <button onClick={() => controlsRef.current?.zoomIn()}>Zoom In</button>
+              <button onClick={() => controlsRef.current?.zoomOut()}>Zoom Out</button>
+              <button onClick={() => controlsRef.current?.fit()}>Fit to Screen</button>
+              <button onClick={() => controlsRef.current?.layoutGrid()}>Grid Layout</button>
+              <button onClick={() => controlsRef.current?.layoutCircle()}>Circle Layout</button>
+            </>
+          )}
         </div>
       </div>
 
@@ -61,37 +67,52 @@ export default function App() {
 
       <StatsBar nodes={graph.nodes} edges={graph.edges} />
 
-      <TopologyView
-        nodes={graph.nodes}
-        edges={graph.edges}
-        onNodeSelect={setSelectedDevice}
-        controlsRef={controlsRef}
-      />
+      <div className="view-tabs">
+        <button className={view === 'topology' ? 'active' : ''} onClick={() => setView('topology')}>
+          Topology View
+        </button>
+        <button className={view === 'dashboard' ? 'active' : ''} onClick={() => setView('dashboard')}>
+          Dashboard View
+        </button>
+      </div>
 
-      <div className="legend">
-        <h3>Legend</h3>
-        <p className="legend-hint">Color = status, shape = device type. Dashed boxes group devices by network.</p>
-        <div className="legend-items">
-          <div>
-            <span className="legend-color" style={{ background: '#4CAF50' }} /> Online
-          </div>
-          <div>
-            <span className="legend-color" style={{ background: '#f44336' }} /> Offline
-          </div>
-          <div>
-            <span className="legend-color legend-diamond" style={{ background: '#FF9800' }} /> Router
-          </div>
-          <div>
-            <span className="legend-color legend-square" style={{ background: '#2196F3' }} /> Server
-          </div>
-          <div>
-            <span className="legend-color" style={{ background: '#9C27B0' }} /> Workstation
-          </div>
-          <div>
-            <span className="legend-color legend-triangle" style={{ background: '#607D8B' }} /> IoT/Other
+      {view === 'topology' ? (
+        <TopologyView
+          nodes={graph.nodes}
+          edges={graph.edges}
+          onNodeSelect={setSelectedDevice}
+          controlsRef={controlsRef}
+        />
+      ) : (
+        <DashboardView nodes={graph.nodes} selectedId={selectedDevice?.id} onSelectDevice={setSelectedDevice} />
+      )}
+
+      {view === 'topology' && (
+        <div className="legend">
+          <h3>Legend</h3>
+          <p className="legend-hint">Color = status, shape = device type. Dashed boxes group devices by network.</p>
+          <div className="legend-items">
+            <div>
+              <span className="legend-color" style={{ background: '#4CAF50' }} /> Online
+            </div>
+            <div>
+              <span className="legend-color" style={{ background: '#f44336' }} /> Offline
+            </div>
+            <div>
+              <span className="legend-color legend-diamond" style={{ background: '#FF9800' }} /> Router
+            </div>
+            <div>
+              <span className="legend-color legend-square" style={{ background: '#2196F3' }} /> Server
+            </div>
+            <div>
+              <span className="legend-color" style={{ background: '#9C27B0' }} /> Workstation
+            </div>
+            <div>
+              <span className="legend-color legend-triangle" style={{ background: '#607D8B' }} /> IoT/Other
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <DeviceDetailPanel device={selectedDevice} />
     </div>
