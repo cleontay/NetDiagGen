@@ -71,6 +71,25 @@ button:hover,
   color: white;
 }
 
+.overrides-section {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.overrides-btn {
+  background: white;
+  border-color: #764ba2;
+  color: #764ba2;
+}
+
+.overrides-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .folder-btn {
   background: #17a2b8;
   border-color: #17a2b8;
@@ -328,6 +347,64 @@ button:hover,
   border-radius: 8px;
   font-size: 14px;
   min-height: 100px;
+}
+
+.node-info h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edited-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #fff3cd;
+  color: #856404;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.edit-form-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.edit-form-actions button {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.save-btn {
+  background: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edit-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.edit-form input,
+.edit-form textarea {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: normal;
 }
 
 @media (max-width: 768px) {

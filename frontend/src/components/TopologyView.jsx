@@ -174,6 +174,26 @@ export default function TopologyView({ nodes, edges, onNodeSelect, controlsRef }
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
+
+    // If the same set of devices is still present (e.g. an edit changed a
+    // name/ports/remarks), update data in place instead of rebuilding the
+    // graph, so the layout/zoom/pan isn't disrupted by every edit.
+    const newIds = new Set(nodes.map((n) => n.id));
+    const existingIds = new Set(
+      cy
+        .nodes()
+        .filter((n) => !n.data('isNetworkGroup'))
+        .map((n) => n.id())
+    );
+    const sameStructure = newIds.size === existingIds.size && [...newIds].every((id) => existingIds.has(id));
+
+    if (sameStructure) {
+      cy.batch(() => {
+        nodes.forEach((n) => cy.getElementById(n.id).data(n));
+      });
+      return;
+    }
+
     cy.elements().remove();
     cy.add(toElements(nodes, edges));
     cy.layout(layout).run();

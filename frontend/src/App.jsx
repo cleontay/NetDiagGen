@@ -1,11 +1,13 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import TopologyView from './components/TopologyView';
 import DashboardView from './components/DashboardView';
 import DeviceDetailPanel from './components/DeviceDetailPanel';
 import StatsBar from './components/StatsBar';
 import SourceLoader from './components/SourceLoader';
+import OverridesControls from './components/OverridesControls';
 import { parseNetworkJSON } from './data/parseNetworkJSON';
 import { sampleData } from './data/sampleData';
+import { mergeNodesWithOverrides } from './data/mergeOverrides';
 import './App.css';
 
 export default function App() {
@@ -14,7 +16,10 @@ export default function App() {
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [error, setError] = useState(null);
   const [view, setView] = useState('topology');
+  const [overrides, setOverrides] = useState({});
   const controlsRef = useRef(null);
+
+  const mergedNodes = useMemo(() => mergeNodesWithOverrides(graph.nodes, overrides), [graph.nodes, overrides]);
 
   const loadJSON = useCallback((jsonData, meta = {}) => {
     try {
@@ -35,6 +40,33 @@ export default function App() {
     setError(null);
   }, []);
 
+  const handleSaveOverride = useCallback((deviceId, fields) => {
+    setOverrides((prev) => ({
+      ...prev,
+      [deviceId]: { ...prev[deviceId], ...fields, updatedAt: new Date().toISOString() },
+    }));
+    setSelectedDevice((prev) => (prev && prev.id === deviceId ? { ...prev, ...fields } : prev));
+  }, []);
+
+  const handleResetOverride = useCallback(
+    (deviceId) => {
+      setOverrides((prev) => {
+        const next = { ...prev };
+        delete next[deviceId];
+        return next;
+      });
+      setSelectedDevice((prev) => {
+        if (!prev || prev.id !== deviceId) return prev;
+        return graph.nodes.find((n) => n.id === deviceId) ?? prev;
+      });
+    },
+    [graph.nodes]
+  );
+
+  const handleImportOverrides = useCallback((imported) => {
+    setOverrides((prev) => ({ ...prev, ...imported }));
+  }, []);
+
   return (
     <div className="container">
       <header>
@@ -44,6 +76,8 @@ export default function App() {
 
       <div className="controls">
         <SourceLoader onLoad={loadJSON} onError={setError} />
+
+        <OverridesControls overrides={overrides} onImport={handleImportOverrides} onError={setError} />
 
         <div className="view-controls">
           <button className="reset-btn" onClick={handleReset}>
@@ -65,7 +99,7 @@ export default function App() {
 
       {sourceLabel && <div className="current-source">Showing: {sourceLabel}</div>}
 
-      <StatsBar nodes={graph.nodes} edges={graph.edges} />
+      <StatsBar nodes={mergedNodes} edges={graph.edges} />
 
       <div className="view-tabs">
         <button className={view === 'topology' ? 'active' : ''} onClick={() => setView('topology')}>
@@ -78,13 +112,13 @@ export default function App() {
 
       {view === 'topology' ? (
         <TopologyView
-          nodes={graph.nodes}
+          nodes={mergedNodes}
           edges={graph.edges}
           onNodeSelect={setSelectedDevice}
           controlsRef={controlsRef}
         />
       ) : (
-        <DashboardView nodes={graph.nodes} selectedId={selectedDevice?.id} onSelectDevice={setSelectedDevice} />
+        <DashboardView nodes={mergedNodes} selectedId={selectedDevice?.id} onSelectDevice={setSelectedDevice} />
       )}
 
       {view === 'topology' && (
@@ -114,7 +148,12 @@ export default function App() {
         </div>
       )}
 
-      <DeviceDetailPanel device={selectedDevice} />
+      <DeviceDetailPanel
+        device={selectedDevice}
+        hasOverride={Boolean(selectedDevice && overrides[selectedDevice.id])}
+        onSave={handleSaveOverride}
+        onResetOverride={handleResetOverride}
+      />
     </div>
   );
 }
