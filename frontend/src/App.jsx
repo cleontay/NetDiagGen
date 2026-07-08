@@ -70,6 +70,7 @@ export default function App() {
 
       <div className="legend">
         <h3>Legend</h3>
+        <p className="legend-hint">Color = status, shape = device type. Dashed boxes group devices by network.</p>
         <div className="legend-items">
           <div>
             <span className="legend-color" style={{ background: '#4CAF50' }} /> Online
@@ -78,16 +79,16 @@ export default function App() {
             <span className="legend-color" style={{ background: '#f44336' }} /> Offline
           </div>
           <div>
-            <span className="legend-color" style={{ background: '#FF9800' }} /> Router
+            <span className="legend-color legend-diamond" style={{ background: '#FF9800' }} /> Router
           </div>
           <div>
-            <span className="legend-color" style={{ background: '#2196F3' }} /> Server
+            <span className="legend-color legend-square" style={{ background: '#2196F3' }} /> Server
           </div>
           <div>
             <span className="legend-color" style={{ background: '#9C27B0' }} /> Workstation
           </div>
           <div>
-            <span className="legend-color" style={{ background: '#607D8B' }} /> IoT/Other
+            <span className="legend-color legend-triangle" style={{ background: '#607D8B' }} /> IoT/Other
           </div>
         </div>
       </div>

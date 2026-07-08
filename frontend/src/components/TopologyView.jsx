@@ -1,11 +1,33 @@
 import { useEffect, useRef } from 'react';
 import cytoscape from 'cytoscape';
 import { getNodeColor } from '../data/nodeColors';
+import { getNodeShape } from '../data/nodeShapes';
 
 function toElements(nodes, edges) {
-  const elements = nodes.map((node) => ({
-    data: { ...node },
-  }));
+  const elements = [];
+
+  // Nest devices under a compound "network group" node when the source data
+  // defines more than one network, so segments are visually distinguishable.
+  const networkIds = [...new Set(nodes.map((n) => n.networkId).filter(Boolean))];
+  const useGroups = networkIds.length > 1;
+
+  if (useGroups) {
+    networkIds.forEach((networkId) => {
+      const sample = nodes.find((n) => n.networkId === networkId);
+      elements.push({
+        data: { id: `network:${networkId}`, name: sample?.networkName ?? networkId, isNetworkGroup: true },
+      });
+    });
+  }
+
+  nodes.forEach((node) => {
+    elements.push({
+      data: {
+        ...node,
+        ...(useGroups && node.networkId ? { parent: `network:${node.networkId}` } : {}),
+      },
+    });
+  });
 
   edges.forEach((edge) => {
     elements.push({
@@ -24,10 +46,7 @@ const style = [
   {
     selector: 'node',
     style: {
-      'background-color': (el) => getNodeColor(el.data('type'), el.data('status')),
       label: 'data(name)',
-      width: 'mapData(name.length, 1, 20, 40, 80)',
-      height: 'mapData(name.length, 1, 20, 40, 80)',
       'font-size': '12px',
       'text-valign': 'center',
       'text-halign': 'center',
@@ -36,6 +55,35 @@ const style = [
       'text-outline-color': '#333',
       'border-width': 3,
       'border-color': '#fff',
+    },
+  },
+  {
+    // Leaf device nodes: colored/shaped by type+status. Compound network
+    // group nodes (below) are excluded so they can auto-size to their children.
+    selector: 'node:childless',
+    style: {
+      'background-color': (el) => getNodeColor(el.data('type'), el.data('status')),
+      shape: (el) => getNodeShape(el.data('type')),
+      width: 'mapData(name.length, 1, 20, 40, 80)',
+      height: 'mapData(name.length, 1, 20, 40, 80)',
+    },
+  },
+  {
+    selector: 'node:parent',
+    style: {
+      'background-color': '#eef1fa',
+      'background-opacity': 0.6,
+      'border-width': 2,
+      'border-style': 'dashed',
+      'border-color': '#667eea',
+      shape: 'round-rectangle',
+      padding: '24px',
+      'text-valign': 'top',
+      'text-halign': 'center',
+      'font-size': '14px',
+      'font-weight': 'bold',
+      color: '#333',
+      'text-outline-width': 0,
     },
   },
   {
@@ -101,7 +149,9 @@ export default function TopologyView({ nodes, edges, onNodeSelect, controlsRef }
     cyRef.current = cy;
 
     cy.on('tap', 'node', (evt) => {
-      onNodeSelect?.(evt.target.data());
+      const data = evt.target.data();
+      if (data.isNetworkGroup) return;
+      onNodeSelect?.(data);
     });
 
     if (controlsRef) {
