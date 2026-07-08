@@ -1,0 +1,8 @@
+{
+  "sources": [
+    {
+      "file": "sample-network.json",
+      "label": "Sample Office Network"
+    }
+  ]
+}
