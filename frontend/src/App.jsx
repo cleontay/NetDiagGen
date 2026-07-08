@@ -2,21 +2,23 @@ import { useCallback, useRef, useState } from 'react';
 import TopologyView from './components/TopologyView';
 import DeviceDetailPanel from './components/DeviceDetailPanel';
 import StatsBar from './components/StatsBar';
+import SourceLoader from './components/SourceLoader';
 import { parseNetworkJSON } from './data/parseNetworkJSON';
 import { sampleData } from './data/sampleData';
 import './App.css';
 
 export default function App() {
   const [graph, setGraph] = useState(() => parseNetworkJSON(sampleData));
+  const [sourceLabel, setSourceLabel] = useState('Sample Data');
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [error, setError] = useState(null);
-  const fileInputRef = useRef(null);
   const controlsRef = useRef(null);
 
-  const loadJSON = useCallback((jsonData) => {
+  const loadJSON = useCallback((jsonData, meta = {}) => {
     try {
       const parsed = parseNetworkJSON(jsonData);
       setGraph(parsed);
+      setSourceLabel(meta.label ?? null);
       setSelectedDevice(null);
       setError(null);
     } catch (err) {
@@ -24,27 +26,9 @@ export default function App() {
     }
   }, []);
 
-  const handleFileUpload = useCallback(
-    (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const jsonData = JSON.parse(e.target.result);
-          loadJSON(jsonData);
-        } catch (err) {
-          setError('Invalid JSON file: ' + err.message);
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = '';
-    },
-    [loadJSON]
-  );
-
   const handleReset = useCallback(() => {
     setGraph({ nodes: [], edges: [] });
+    setSourceLabel(null);
     setSelectedDevice(null);
     setError(null);
   }, []);
@@ -57,27 +41,12 @@ export default function App() {
       </header>
 
       <div className="controls">
-        <div className="upload-section">
-          <label className="upload-btn" htmlFor="fileUpload">
-            Upload JSON File
-          </label>
-          <input
-            ref={fileInputRef}
-            id="fileUpload"
-            type="file"
-            accept=".json"
-            style={{ display: 'none' }}
-            onChange={handleFileUpload}
-          />
-          <button className="sample-btn" onClick={() => loadJSON(sampleData)}>
-            Load Sample Data
-          </button>
+        <SourceLoader onLoad={loadJSON} onError={setError} />
+
+        <div className="view-controls">
           <button className="reset-btn" onClick={handleReset}>
             Clear Graph
           </button>
-        </div>
-
-        <div className="view-controls">
           <button onClick={() => controlsRef.current?.zoomIn()}>Zoom In</button>
           <button onClick={() => controlsRef.current?.zoomOut()}>Zoom Out</button>
           <button onClick={() => controlsRef.current?.fit()}>Fit to Screen</button>
@@ -87,6 +56,8 @@ export default function App() {
       </div>
 
       {error && <div className="error-banner">{error}</div>}
+
+      {sourceLabel && <div className="current-source">Showing: {sourceLabel}</div>}
 
       <StatsBar nodes={graph.nodes} edges={graph.edges} />
 
