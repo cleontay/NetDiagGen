@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-const API_URL = import.meta.env.VITE_STATUS_API_URL ?? 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_STATUS_API_URL || 'http://localhost:4000';
 
 // Talks to the optional backend (backend/) that performs live reachability
 // checks, since a browser can't TCP-connect to arbitrary hosts itself. If

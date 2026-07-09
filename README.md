@@ -33,6 +33,29 @@ override with `VITE_STATUS_API_URL` if it runs elsewhere. Status checks are
 restricted to private IP ranges (RFC1918, loopback, link-local) — the
 backend refuses to probe public addresses.
 
+## Deployment
+
+**Frontend** builds to static files and can be hosted anywhere
+(`frontend/dist` after `npm run build`). A GitHub Actions workflow
+(`.github/workflows/deploy-frontend.yml`) is included to publish it to
+GitHub Pages on every push to `main` that touches `frontend/`. It only
+takes effect once Pages is enabled for this repo (Settings → Pages →
+Source: "GitHub Actions") — nothing is published automatically until
+that's turned on. If you deploy the backend somewhere and want the
+GitHub Pages build to use it, set a repository variable
+`STATUS_API_URL` (Settings → Secrets and variables → Actions → Variables)
+to its URL before the workflow runs.
+
+For Netlify/Vercel instead: point them at `frontend/`, build command
+`npm run build`, publish directory `dist`. They serve from the root, so
+no base-path configuration is needed (that's GitHub Pages-specific).
+
+**Backend** (only needed for live status checks) is a plain Node/Express
+process — deploy it anywhere that runs Node (Render, Fly.io, a small VPS,
+etc.) and point the frontend at it via `VITE_STATUS_API_URL` at build
+time. If it's not deployed or not reachable, the frontend degrades
+gracefully to showing only the status reported in the loaded JSON.
+
 ## JSON format
 
 The app accepts several shapes:
