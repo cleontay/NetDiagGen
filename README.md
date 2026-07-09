@@ -11,6 +11,7 @@ JSON file, no database required.
 - [Features](#features)
 - [Core structure](#core-structure)
 - [Installation](#installation)
+- [Docker](#docker)
 - [Usage guide](#usage-guide)
 - [JSON format](#json-format)
 - [Configuration](#configuration)
@@ -124,15 +125,19 @@ NetDiagGen/
 │       │   ├── useSourceManifest.js    fetches public/sources/manifest.json
 │       │   └── useLocalFolder.js       wraps the File System Access API
 │       └── assets/icons/          the default per-type SVG pictograms
+│   ├── Dockerfile                 multi-stage build: compile with Node, serve with nginx
+│   └── nginx.conf                 static file + SPA-fallback serving config
 │
 ├── backend/                      Optional Express service (live status only)
-│   └── src/
-│       ├── index.js                Express app, the /api/status-check route
-│       ├── pingCheck.js            shells out to the system `ping` command
-│       ├── statusCheck.js          TCP port scan (open/closed/filtered)
-│       ├── isPrivateIp.js          restricts checks to private IP ranges
-│       └── concurrency.js          small helper to bound parallel checks
+│   ├── src/
+│   │   ├── index.js                Express app, the /api/status-check route
+│   │   ├── pingCheck.js            shells out to the system `ping` command
+│   │   ├── statusCheck.js          TCP port scan (open/closed/filtered)
+│   │   ├── isPrivateIp.js          restricts checks to private IP ranges
+│   │   └── concurrency.js          small helper to bound parallel checks
+│   └── Dockerfile                 Node + iputils (for real ICMP ping)
 │
+├── docker-compose.yml            builds/runs both containers together
 └── .github/workflows/            GitHub Pages deploy workflow (frontend only)
 ```
 
@@ -192,6 +197,63 @@ everything else keeps working normally.
 
 That's the whole install. There's nothing to build, migrate, or seed —
 `npm run dev` and (optionally) `npm start` is the entire setup.
+
+## Docker
+
+Prefer containers? Both services have Dockerfiles, and a `docker-compose.yml`
+at the repo root wires them together. **Prerequisite:** Docker with the
+Compose plugin ([Docker Desktop](https://www.docker.com/products/docker-desktop/)
+on Mac/Windows, or `docker` + `docker-compose-plugin` on Linux).
+
+```bash
+docker compose up --build
+```
+
+That builds and starts both containers:
+
+- Frontend at **http://localhost:8080**
+- Backend at **http://localhost:4000**
+
+Stop with `Ctrl+C`, or `docker compose down` to remove the containers. Add
+`-d` to run in the background.
+
+A few things worth knowing:
+
+- The frontend is a multi-stage build (compiled with Node, then served as
+  static files by nginx) — the image you run doesn't contain Node at all.
+- The backend image installs `iputils` so the real ICMP ping check works
+  out of the box, and deliberately runs as root (no `USER` directive) so it
+  has the raw-socket permission ICMP needs without extra flags. If you
+  harden it later with a non-root user, either add
+  `cap_add: ["NET_RAW"]` to the `backend` service in `docker-compose.yml`,
+  or accept that ICMP checks will report "not available" and reachability
+  will fall back to the TCP scan (the app already handles that gracefully).
+- `VITE_STATUS_API_URL` is baked into the frontend at **build** time (a
+  Vite/browser constraint, not a Docker one — see [Configuration](#configuration)).
+  The default (`http://localhost:4000`) is correct for running both
+  containers locally. If you deploy these containers to a remote host,
+  override it before building:
+
+  ```bash
+  VITE_STATUS_API_URL=https://your-domain.example.com:4000 docker compose up --build
+  ```
+
+  or create a `.env` file next to `docker-compose.yml` with
+  `VITE_STATUS_API_URL=https://your-domain.example.com:4000` in it — Compose
+  reads that automatically.
+- Only running the frontend container is fine too — comment out or remove
+  the `backend` service if you don't want live status checks; nothing else
+  depends on it.
+
+To build and run just one service by hand instead of Compose:
+
+```bash
+docker build -t netdiaggen-frontend ./frontend
+docker run -p 8080:80 netdiaggen-frontend
+
+docker build -t netdiaggen-backend ./backend
+docker run -p 4000:4000 netdiaggen-backend
+```
 
 ## Usage guide
 
@@ -324,6 +386,11 @@ Vercel instead, point them at the `frontend/` directory with build command
 it via `VITE_STATUS_API_URL` (see Configuration above). If it's ever
 unreachable, the frontend just shows a small warning and keeps working off
 whatever status the loaded JSON reported.
+
+**Containers:** see [Docker](#docker) above — both services also build as
+Docker images (`frontend/Dockerfile`, `backend/Dockerfile`), which is the
+easiest path if your host (a VPS, Cloud Run, ECS, etc.) runs containers
+rather than bare Node processes.
 
 ## Troubleshooting
 
