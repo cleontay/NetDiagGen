@@ -161,6 +161,7 @@ export default function TopologyView({ nodes, edges, onNodeSelect, controlsRef }
         fit: () => cy.fit(),
         layoutGrid: () => cy.layout({ name: 'grid', fit: true }).run(),
         layoutCircle: () => cy.layout({ name: 'circle', fit: true }).run(),
+        exportPng: () => cy.png({ full: true, scale: 2, bg: '#fafafa' }),
       };
     }
 

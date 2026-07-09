@@ -529,3 +529,33 @@ button:hover,
     text-align: center;
   }
 }
+
+@media print {
+  body {
+    background: none;
+    padding: 0;
+  }
+
+  .container {
+    box-shadow: none;
+    border-radius: 0;
+    max-width: none;
+  }
+
+  header,
+  .controls,
+  .error-banner,
+  .current-source,
+  .stats-bar,
+  .view-tabs,
+  .legend,
+  .node-info,
+  .bulk-action-bar,
+  .dashboard-filters {
+    display: none !important;
+  }
+
+  .graph-container {
+    height: 100vh;
+  }
+}

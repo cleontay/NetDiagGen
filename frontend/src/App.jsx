@@ -104,6 +104,15 @@ export default function App() {
     [graph.nodes]
   );
 
+  const handleExportPng = useCallback(() => {
+    const dataUrl = controlsRef.current?.exportPng();
+    if (!dataUrl) return;
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'network-topology.png';
+    a.click();
+  }, []);
+
   return (
     <div className="container">
       <header>
@@ -134,8 +143,10 @@ export default function App() {
               <button onClick={() => controlsRef.current?.fit()}>Fit to Screen</button>
               <button onClick={() => controlsRef.current?.layoutGrid()}>Grid Layout</button>
               <button onClick={() => controlsRef.current?.layoutCircle()}>Circle Layout</button>
+              <button onClick={handleExportPng}>Export PNG</button>
             </>
           )}
+          <button onClick={() => window.print()}>Print / Save as PDF</button>
         </div>
       </div>
 
