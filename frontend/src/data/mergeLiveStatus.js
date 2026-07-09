@@ -7,6 +7,7 @@ export function mergeLiveStatus(nodes, liveStatus) {
     return {
       ...node,
       liveReachable: live.reachable,
+      liveAlive: live.alive,
       liveCheckedAt: live.checkedAt,
       liveError: live.error,
       liveOpenPorts: live.openPorts,

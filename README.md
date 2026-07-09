@@ -33,6 +33,13 @@ override with `VITE_STATUS_API_URL` if it runs elsewhere. Status checks are
 restricted to private IP ranges (RFC1918, loopback, link-local) — the
 backend refuses to probe public addresses.
 
+Liveness combines two signals: a real ICMP ping (shells out to the system
+`ping` command) and a TCP port scan. If `ping` isn't installed on the
+backend's host (common on minimal/containerized environments), the ICMP
+result reports as "not available" rather than "down", and reachability
+falls back to the TCP scan alone — install `iputils-ping` (Debian/Ubuntu)
+or equivalent if you want the ICMP signal.
+
 ## Deployment
 
 **Frontend** builds to static files and can be hosted anywhere

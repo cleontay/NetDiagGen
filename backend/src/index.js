@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { isPrivateIPv4 } from './isPrivateIp.js';
 import { scanDevice } from './statusCheck.js';
+import { pingHost } from './pingCheck.js';
 import { mapWithConcurrency } from './concurrency.js';
 
 const MAX_DEVICES_PER_REQUEST = 100;
@@ -40,8 +41,18 @@ app.post('/api/status-check', async (req, res) => {
     if (!isPrivateIPv4(device.ip)) {
       return { id: device.id, error: 'only private IP ranges can be checked' };
     }
-    const { reachable, openPorts } = await scanDevice(device.ip, device.ports);
-    return { id: device.id, reachable, openPorts, checkedAt: new Date().toISOString() };
+    const [alive, portScan] = await Promise.all([pingHost(device.ip), scanDevice(device.ip, device.ports)]);
+    // ICMP reply is the strongest signal; fall back to the TCP port scan
+    // (open or actively-refused ports both prove the host responded) since
+    // some hosts/firewalls drop ICMP but still answer on TCP.
+    const reachable = alive === true || portScan.reachable;
+    return {
+      id: device.id,
+      reachable,
+      alive,
+      openPorts: portScan.openPorts,
+      checkedAt: new Date().toISOString(),
+    };
   });
 
   res.json({ results });

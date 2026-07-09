@@ -15,6 +15,7 @@ const KNOWN_FIELDS = new Set([
   'parent',
   'isNetworkGroup',
   'liveReachable',
+  'liveAlive',
   'liveCheckedAt',
   'liveError',
   'liveOpenPorts',
@@ -164,6 +165,17 @@ export default function DeviceDetailPanel({ device, override, history, onSave, o
                   </span>
                   {device.liveCheckedAt && (
                     <span className="detail-hint"> checked {new Date(device.liveCheckedAt).toLocaleTimeString()}</span>
+                  )}
+                </Row>
+              )}
+              {device.liveAlive !== undefined && (
+                <Row label="ICMP ping">
+                  {device.liveAlive === null ? (
+                    <span className="status-badge status-unknown">Not available</span>
+                  ) : (
+                    <span className={`status-badge status-${device.liveAlive ? 'online' : 'offline'}`}>
+                      {device.liveAlive ? 'Alive' : 'No reply'}
+                    </span>
                   )}
                 </Row>
               )}
