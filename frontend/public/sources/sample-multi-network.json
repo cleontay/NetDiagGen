@@ -1,0 +1,26 @@
+{
+  "networks": [
+    {
+      "id": "office-lan",
+      "name": "Office LAN",
+      "nodes": [
+        { "id": "office-router", "name": "Office Router", "type": "router", "status": "online", "ip": "10.0.1.1" },
+        { "id": "office-server", "name": "File Server", "type": "server", "status": "online", "ip": "10.0.1.10" },
+        { "id": "office-pc1", "name": "Reception PC", "type": "workstation", "status": "online", "ip": "10.0.1.50" }
+      ],
+      "edges": [
+        { "source": "office-router", "target": "office-server" },
+        { "source": "office-router", "target": "office-pc1" }
+      ]
+    },
+    {
+      "id": "guest-wifi",
+      "name": "Guest WiFi",
+      "nodes": [
+        { "id": "guest-ap", "name": "Guest Access Point", "type": "router", "status": "online", "ip": "10.0.2.1" },
+        { "id": "guest-cam", "name": "Lobby Camera", "type": "iot", "status": "offline", "ip": "10.0.2.100" }
+      ],
+      "edges": [{ "source": "guest-ap", "target": "guest-cam" }]
+    }
+  ]
+}

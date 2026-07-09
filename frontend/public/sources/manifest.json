@@ -1,0 +1,12 @@
+{
+  "sources": [
+    {
+      "file": "sample-network.json",
+      "label": "Sample Office Network"
+    },
+    {
+      "file": "sample-multi-network.json",
+      "label": "Sample Multi-Network (Office + Guest WiFi)"
+    }
+  ]
+}
