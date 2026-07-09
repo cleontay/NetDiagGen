@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import StatusHistoryStrip from './StatusHistoryStrip';
+import { getNodeIcon } from '../data/nodeIcons';
 
 const KNOWN_FIELDS = new Set([
   'id',
@@ -10,12 +12,18 @@ const KNOWN_FIELDS = new Set([
   'networkName',
   'ports',
   'remarks',
+  'tags',
+  'icon',
   'parent',
   'isNetworkGroup',
   'liveReachable',
+  'liveAlive',
   'liveCheckedAt',
   'liveError',
+  'liveOpenPorts',
 ]);
+
+const MAX_ICON_BYTES = 200 * 1024;
 
 function parsePorts(input) {
   return [...new Set(
@@ -24,6 +32,15 @@ function parsePorts(input) {
       .map((p) => parseInt(p.trim(), 10))
       .filter((p) => Number.isInteger(p) && p > 0 && p <= 65535)
   )].sort((a, b) => a - b);
+}
+
+function parseTags(input) {
+  return [...new Set(
+    input
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+  )];
 }
 
 function formatExtraValue(value) {
@@ -41,17 +58,21 @@ function Row({ label, children }) {
   );
 }
 
-export default function DeviceDetailPanel({ device, override, onSave, onResetOverride }) {
+export default function DeviceDetailPanel({ device, override, history, onSave, onResetOverride }) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: '', ports: '', remarks: '' });
+  const [form, setForm] = useState({ name: '', ports: '', remarks: '', tags: '', icon: '' });
+  const [iconError, setIconError] = useState(null);
 
   useEffect(() => {
     setEditing(false);
+    setIconError(null);
     if (device) {
       setForm({
         name: device.name ?? '',
         ports: (device.ports ?? []).join(', '),
         remarks: device.remarks ?? '',
+        tags: (device.tags ?? []).join(', '),
+        icon: device.icon ?? '',
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,8 +96,31 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
       name: form.name.trim(),
       ports: parsePorts(form.ports),
       remarks: form.remarks.trim(),
+      tags: parseTags(form.tags),
+      icon: form.icon,
     });
     setEditing(false);
+  };
+
+  const handleIconFile = (event) => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    setIconError(null);
+
+    if (!file.type.startsWith('image/')) {
+      setIconError('Please choose an image file.');
+      return;
+    }
+    if (file.size > MAX_ICON_BYTES) {
+      setIconError(`Image too large (max ${Math.round(MAX_ICON_BYTES / 1024)}KB).`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => setForm((f) => ({ ...f, icon: e.target.result }));
+    reader.onerror = () => setIconError('Could not read that file.');
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -88,6 +132,33 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
       <div id="infoContent">
         {editing ? (
           <div className="edit-form">
+            <div className="icon-upload-row">
+              <img
+                className="icon-preview"
+                src={form.icon || getNodeIcon(device)}
+                alt=""
+                width={48}
+                height={48}
+              />
+              <div className="icon-upload-controls">
+                <label className="overrides-btn" htmlFor="iconUpload">
+                  Upload Icon
+                </label>
+                <input
+                  id="iconUpload"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleIconFile}
+                />
+                {form.icon && (
+                  <button type="button" onClick={() => setForm((f) => ({ ...f, icon: '' }))}>
+                    Remove
+                  </button>
+                )}
+                {iconError && <div className="icon-error">{iconError}</div>}
+              </div>
+            </div>
             <label>
               Name
               <input
@@ -97,7 +168,7 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
               />
             </label>
             <label>
-              Open ports (comma-separated)
+              Open ports (declared, comma-separated)
               <input
                 type="text"
                 placeholder="e.g. 22, 80, 443"
@@ -113,6 +184,15 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
                 onChange={(e) => setForm((f) => ({ ...f, remarks: e.target.value }))}
               />
             </label>
+            <label>
+              Tags (comma-separated)
+              <input
+                type="text"
+                placeholder="e.g. critical, guest-network"
+                value={form.tags}
+                onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
+              />
+            </label>
             <div className="edit-form-actions">
               <button className="save-btn" onClick={handleSave}>
                 Save
@@ -122,7 +202,10 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
           </div>
         ) : (
           <>
-            <div className="detail-title">{device.name}</div>
+            <div className="detail-title">
+              <img className="icon-preview" src={getNodeIcon(device)} alt="" width={32} height={32} />
+              {device.name}
+            </div>
 
             <div className="detail-grid">
               <Row label="ID">{device.id}</Row>
@@ -144,11 +227,39 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
                   )}
                 </Row>
               )}
+              {device.liveAlive !== undefined && (
+                <Row label="ICMP ping">
+                  {device.liveAlive === null ? (
+                    <span className="status-badge status-unknown">Not available</span>
+                  ) : (
+                    <span className={`status-badge status-${device.liveAlive ? 'online' : 'offline'}`}>
+                      {device.liveAlive ? 'Alive' : 'No reply'}
+                    </span>
+                  )}
+                </Row>
+              )}
               {device.liveError && <Row label="Live check error">{device.liveError}</Row>}
-              {device.ports?.length > 0 && <Row label="Open ports">{device.ports.join(', ')}</Row>}
+              {device.liveOpenPorts?.length > 0 && (
+                <Row label="Open ports (live scan)">{device.liveOpenPorts.join(', ')}</Row>
+              )}
+              {device.ports?.length > 0 && <Row label="Open ports (declared)">{device.ports.join(', ')}</Row>}
               {device.remarks && <Row label="Remarks">{device.remarks}</Row>}
+              {device.tags?.length > 0 && (
+                <Row label="Tags">
+                  {device.tags.map((tag) => (
+                    <span className="tag-chip" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </Row>
+              )}
               {override?.updatedAt && (
                 <Row label="Last edited">{new Date(override.updatedAt).toLocaleString()}</Row>
+              )}
+              {history?.length > 0 && (
+                <Row label="Recent checks">
+                  <StatusHistoryStrip entries={history} />
+                </Row>
               )}
             </div>
 
