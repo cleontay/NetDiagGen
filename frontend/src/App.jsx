@@ -78,6 +78,32 @@ export default function App() {
     setOverrides((prev) => ({ ...prev, ...imported }));
   }, []);
 
+  const handleBulkApply = useCallback(
+    (deviceIds, { tags, remarks }) => {
+      const addedTags = tags.split(',').map((t) => t.trim()).filter(Boolean);
+      const newRemarks = remarks.trim();
+      const now = new Date().toISOString();
+
+      setOverrides((prev) => {
+        const next = { ...prev };
+        deviceIds.forEach((id) => {
+          const existing = next[id] ?? {};
+          const baseNode = graph.nodes.find((n) => n.id === id);
+          const existingTags = existing.tags ?? baseNode?.tags ?? [];
+          const mergedTags = addedTags.length ? [...new Set([...existingTags, ...addedTags])] : existingTags;
+          next[id] = {
+            ...existing,
+            ...(mergedTags.length ? { tags: mergedTags } : {}),
+            ...(newRemarks ? { remarks: newRemarks } : {}),
+            updatedAt: now,
+          };
+        });
+        return next;
+      });
+    },
+    [graph.nodes]
+  );
+
   return (
     <div className="container">
       <header>
@@ -136,7 +162,12 @@ export default function App() {
           controlsRef={controlsRef}
         />
       ) : (
-        <DashboardView nodes={mergedNodes} selectedId={selectedDevice?.id} onSelectDevice={setSelectedDevice} />
+        <DashboardView
+          nodes={mergedNodes}
+          selectedId={selectedDevice?.id}
+          onSelectDevice={setSelectedDevice}
+          onBulkApply={handleBulkApply}
+        />
       )}
 
       {view === 'topology' && (

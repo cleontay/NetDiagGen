@@ -304,6 +304,48 @@ button:hover,
   color: #666;
 }
 
+.tag-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  margin: 2px 4px 2px 0;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #ede7f6;
+  color: #5e35b1;
+}
+
+.checkbox-col {
+  width: 34px;
+  text-align: center;
+}
+
+.bulk-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.bulk-action-bar input {
+  padding: 7px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+  min-width: 180px;
+}
+
+.bulk-action-bar button {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
 .legend {
   padding: 20px;
   background: #f8f9fa;

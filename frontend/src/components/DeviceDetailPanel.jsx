@@ -10,6 +10,7 @@ const KNOWN_FIELDS = new Set([
   'networkName',
   'ports',
   'remarks',
+  'tags',
   'parent',
   'isNetworkGroup',
   'liveReachable',
@@ -24,6 +25,15 @@ function parsePorts(input) {
       .map((p) => parseInt(p.trim(), 10))
       .filter((p) => Number.isInteger(p) && p > 0 && p <= 65535)
   )].sort((a, b) => a - b);
+}
+
+function parseTags(input) {
+  return [...new Set(
+    input
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+  )];
 }
 
 function formatExtraValue(value) {
@@ -43,7 +53,7 @@ function Row({ label, children }) {
 
 export default function DeviceDetailPanel({ device, override, onSave, onResetOverride }) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: '', ports: '', remarks: '' });
+  const [form, setForm] = useState({ name: '', ports: '', remarks: '', tags: '' });
 
   useEffect(() => {
     setEditing(false);
@@ -52,6 +62,7 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
         name: device.name ?? '',
         ports: (device.ports ?? []).join(', '),
         remarks: device.remarks ?? '',
+        tags: (device.tags ?? []).join(', '),
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,6 +86,7 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
       name: form.name.trim(),
       ports: parsePorts(form.ports),
       remarks: form.remarks.trim(),
+      tags: parseTags(form.tags),
     });
     setEditing(false);
   };
@@ -113,6 +125,15 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
                 onChange={(e) => setForm((f) => ({ ...f, remarks: e.target.value }))}
               />
             </label>
+            <label>
+              Tags (comma-separated)
+              <input
+                type="text"
+                placeholder="e.g. critical, guest-network"
+                value={form.tags}
+                onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
+              />
+            </label>
             <div className="edit-form-actions">
               <button className="save-btn" onClick={handleSave}>
                 Save
@@ -147,6 +168,15 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
               {device.liveError && <Row label="Live check error">{device.liveError}</Row>}
               {device.ports?.length > 0 && <Row label="Open ports">{device.ports.join(', ')}</Row>}
               {device.remarks && <Row label="Remarks">{device.remarks}</Row>}
+              {device.tags?.length > 0 && (
+                <Row label="Tags">
+                  {device.tags.map((tag) => (
+                    <span className="tag-chip" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </Row>
+              )}
               {override?.updatedAt && (
                 <Row label="Last edited">{new Date(override.updatedAt).toLocaleString()}</Row>
               )}
