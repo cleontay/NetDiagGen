@@ -15,6 +15,8 @@ export default function DashboardView({ nodes, selectedId, onSelectDevice }) {
   const [sortDir, setSortDir] = useState('asc');
 
   const hasNetworks = nodes.some((n) => n.networkName);
+  const hasLiveStatus = nodes.some((n) => n.liveReachable !== undefined);
+  const columnCount = COLUMNS.length + (hasNetworks ? 1 : 0) + (hasLiveStatus ? 1 : 0);
   const types = useMemo(() => [...new Set(nodes.map((n) => n.type).filter(Boolean))].sort(), [nodes]);
 
   const rows = useMemo(() => {
@@ -87,6 +89,7 @@ export default function DashboardView({ nodes, selectedId, onSelectDevice }) {
                 </th>
               ))}
               {hasNetworks && <th>Network</th>}
+              {hasLiveStatus && <th>Live</th>}
             </tr>
           </thead>
           <tbody>
@@ -103,11 +106,22 @@ export default function DashboardView({ nodes, selectedId, onSelectDevice }) {
                 </td>
                 <td>{n.ip ?? '—'}</td>
                 {hasNetworks && <td>{n.networkName ?? '—'}</td>}
+                {hasLiveStatus && (
+                  <td>
+                    {n.liveReachable === undefined ? (
+                      '—'
+                    ) : (
+                      <span className={`status-badge status-${n.liveReachable ? 'online' : 'offline'}`}>
+                        {n.liveReachable ? 'Reachable' : 'Unreachable'}
+                      </span>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={hasNetworks ? 5 : 4} className="dashboard-empty">
+                <td colSpan={columnCount} className="dashboard-empty">
                   No devices match the current filters.
                 </td>
               </tr>

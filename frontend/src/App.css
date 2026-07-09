@@ -90,6 +90,32 @@ button:hover,
   box-shadow: none !important;
 }
 
+.live-status-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.live-status-btn {
+  background: #6f42c1;
+  border-color: #6f42c1;
+  color: white;
+}
+
+.live-status-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.live-status-warning {
+  font-size: 12px;
+  color: #b3261e;
+  max-width: 260px;
+}
+
 .folder-btn {
   background: #17a2b8;
   border-color: #17a2b8;

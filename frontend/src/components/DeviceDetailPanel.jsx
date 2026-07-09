@@ -12,6 +12,9 @@ const KNOWN_FIELDS = new Set([
   'remarks',
   'parent',
   'isNetworkGroup',
+  'liveReachable',
+  'liveCheckedAt',
+  'liveError',
 ]);
 
 function parsePorts(input) {
@@ -124,6 +127,19 @@ export default function DeviceDetailPanel({ device, hasOverride, onSave, onReset
             )}
             Status: {device.status === 'online' ? 'Online' : device.status === 'offline' ? 'Offline' : 'Unknown'}
             <br />
+            {device.liveReachable !== undefined && (
+              <>
+                Live status: {device.liveReachable ? 'Reachable' : 'Unreachable'}
+                {device.liveCheckedAt && ` (checked ${new Date(device.liveCheckedAt).toLocaleTimeString()})`}
+                <br />
+              </>
+            )}
+            {device.liveError && (
+              <>
+                Live check error: {device.liveError}
+                <br />
+              </>
+            )}
             {device.ports?.length > 0 && (
               <>
                 Open ports: {device.ports.join(', ')}

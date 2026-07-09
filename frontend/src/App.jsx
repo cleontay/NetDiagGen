@@ -5,9 +5,12 @@ import DeviceDetailPanel from './components/DeviceDetailPanel';
 import StatsBar from './components/StatsBar';
 import SourceLoader from './components/SourceLoader';
 import OverridesControls from './components/OverridesControls';
+import LiveStatusControls from './components/LiveStatusControls';
 import { parseNetworkJSON } from './data/parseNetworkJSON';
 import { sampleData } from './data/sampleData';
 import { mergeNodesWithOverrides } from './data/mergeOverrides';
+import { mergeLiveStatus } from './data/mergeLiveStatus';
+import { useLiveStatus } from './hooks/useLiveStatus';
 import './App.css';
 
 export default function App() {
@@ -18,8 +21,16 @@ export default function App() {
   const [view, setView] = useState('topology');
   const [overrides, setOverrides] = useState({});
   const controlsRef = useRef(null);
+  const { liveStatus, checking, backendAvailable, attempted, checkNow } = useLiveStatus();
 
-  const mergedNodes = useMemo(() => mergeNodesWithOverrides(graph.nodes, overrides), [graph.nodes, overrides]);
+  const overriddenNodes = useMemo(
+    () => mergeNodesWithOverrides(graph.nodes, overrides),
+    [graph.nodes, overrides]
+  );
+  const mergedNodes = useMemo(
+    () => mergeLiveStatus(overriddenNodes, liveStatus),
+    [overriddenNodes, liveStatus]
+  );
 
   const loadJSON = useCallback((jsonData, meta = {}) => {
     try {
@@ -78,6 +89,13 @@ export default function App() {
         <SourceLoader onLoad={loadJSON} onError={setError} />
 
         <OverridesControls overrides={overrides} onImport={handleImportOverrides} onError={setError} />
+
+        <LiveStatusControls
+          checking={checking}
+          backendAvailable={backendAvailable}
+          attempted={attempted}
+          onCheckNow={() => checkNow(overriddenNodes)}
+        />
 
         <div className="view-controls">
           <button className="reset-btn" onClick={handleReset}>
