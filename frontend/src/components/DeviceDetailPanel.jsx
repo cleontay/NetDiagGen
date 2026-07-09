@@ -26,7 +26,22 @@ function parsePorts(input) {
   )].sort((a, b) => a - b);
 }
 
-export default function DeviceDetailPanel({ device, hasOverride, onSave, onResetOverride }) {
+function formatExtraValue(value) {
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function Row({ label, children }) {
+  return (
+    <div className="detail-row">
+      <span className="detail-label">{label}</span>
+      <span className="detail-value">{children}</span>
+    </div>
+  );
+}
+
+export default function DeviceDetailPanel({ device, override, onSave, onResetOverride }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: '', ports: '', remarks: '' });
 
@@ -68,7 +83,7 @@ export default function DeviceDetailPanel({ device, hasOverride, onSave, onReset
     <div className="node-info">
       <h3>
         Device Details
-        {hasOverride && <span className="edited-badge">Edited</span>}
+        {override && <span className="edited-badge">Edited</span>}
       </h3>
       <div id="infoContent">
         {editing ? (
@@ -107,66 +122,54 @@ export default function DeviceDetailPanel({ device, hasOverride, onSave, onReset
           </div>
         ) : (
           <>
-            <strong>{device.name}</strong>
-            <br />
-            ID: {device.id}
-            <br />
-            Type: {device.type}
-            <br />
-            {device.ip && (
-              <>
-                IP: {device.ip}
-                <br />
-              </>
-            )}
-            {device.networkName && (
-              <>
-                Network: {device.networkName}
-                <br />
-              </>
-            )}
-            Status: {device.status === 'online' ? 'Online' : device.status === 'offline' ? 'Offline' : 'Unknown'}
-            <br />
-            {device.liveReachable !== undefined && (
-              <>
-                Live status: {device.liveReachable ? 'Reachable' : 'Unreachable'}
-                {device.liveCheckedAt && ` (checked ${new Date(device.liveCheckedAt).toLocaleTimeString()})`}
-                <br />
-              </>
-            )}
-            {device.liveError && (
-              <>
-                Live check error: {device.liveError}
-                <br />
-              </>
-            )}
-            {device.ports?.length > 0 && (
-              <>
-                Open ports: {device.ports.join(', ')}
-                <br />
-              </>
-            )}
-            {device.remarks && (
-              <>
-                Remarks: {device.remarks}
-                <br />
-              </>
-            )}
+            <div className="detail-title">{device.name}</div>
+
+            <div className="detail-grid">
+              <Row label="ID">{device.id}</Row>
+              <Row label="Type">{device.type}</Row>
+              {device.ip && <Row label="IP">{device.ip}</Row>}
+              {device.networkName && <Row label="Network">{device.networkName}</Row>}
+              <Row label="Status">
+                <span className={`status-badge status-${device.status ?? 'unknown'}`}>
+                  {device.status ?? 'unknown'}
+                </span>
+              </Row>
+              {device.liveReachable !== undefined && (
+                <Row label="Live status">
+                  <span className={`status-badge status-${device.liveReachable ? 'online' : 'offline'}`}>
+                    {device.liveReachable ? 'Reachable' : 'Unreachable'}
+                  </span>
+                  {device.liveCheckedAt && (
+                    <span className="detail-hint"> checked {new Date(device.liveCheckedAt).toLocaleTimeString()}</span>
+                  )}
+                </Row>
+              )}
+              {device.liveError && <Row label="Live check error">{device.liveError}</Row>}
+              {device.ports?.length > 0 && <Row label="Open ports">{device.ports.join(', ')}</Row>}
+              {device.remarks && <Row label="Remarks">{device.remarks}</Row>}
+              {override?.updatedAt && (
+                <Row label="Last edited">{new Date(override.updatedAt).toLocaleString()}</Row>
+              )}
+            </div>
+
             {extraFields.length > 0 && (
               <>
                 <hr />
-                {extraFields.map(([key, value]) => (
-                  <div key={key}>
-                    {key}: {String(value)}
-                  </div>
-                ))}
+                <div className="detail-grid">
+                  {extraFields.map(([key, value]) => (
+                    <Row key={key} label={key}>
+                      {formatExtraValue(value)}
+                    </Row>
+                  ))}
+                </div>
               </>
             )}
+
             <div className="edit-form-actions">
               <button className="save-btn" onClick={() => setEditing(true)}>
                 Edit
               </button>
-              {hasOverride && <button onClick={() => onResetOverride(device.id)}>Reset to original</button>}
+              {override && <button onClick={() => onResetOverride(device.id)}>Reset to original</button>}
             </div>
           </>
         )}

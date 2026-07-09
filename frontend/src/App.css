@@ -381,6 +381,45 @@ button:hover,
   gap: 10px;
 }
 
+.detail-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 10px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  row-gap: 8px;
+  column-gap: 12px;
+}
+
+.detail-row {
+  display: contents;
+}
+
+.detail-label {
+  color: #666;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.detail-value {
+  word-break: break-word;
+}
+
+.detail-hint {
+  color: #888;
+  font-size: 12px;
+}
+
+#infoContent hr {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 14px 0;
+}
+
 .edited-badge {
   font-size: 11px;
   font-weight: 700;

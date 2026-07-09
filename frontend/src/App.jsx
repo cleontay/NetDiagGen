@@ -168,7 +168,7 @@ export default function App() {
 
       <DeviceDetailPanel
         device={selectedDevice}
-        hasOverride={Boolean(selectedDevice && overrides[selectedDevice.id])}
+        override={selectedDevice ? overrides[selectedDevice.id] : undefined}
         onSave={handleSaveOverride}
         onResetOverride={handleResetOverride}
       />
