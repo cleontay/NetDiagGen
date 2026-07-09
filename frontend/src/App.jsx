@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TopologyView from './components/TopologyView';
 import DashboardView from './components/DashboardView';
 import DeviceDetailPanel from './components/DeviceDetailPanel';
@@ -6,12 +6,15 @@ import StatsBar from './components/StatsBar';
 import SourceLoader from './components/SourceLoader';
 import OverridesControls from './components/OverridesControls';
 import LiveStatusControls from './components/LiveStatusControls';
+import AlertsPanel from './components/AlertsPanel';
 import { parseNetworkJSON } from './data/parseNetworkJSON';
 import { sampleData } from './data/sampleData';
 import { mergeNodesWithOverrides } from './data/mergeOverrides';
 import { mergeLiveStatus } from './data/mergeLiveStatus';
 import { useLiveStatus } from './hooks/useLiveStatus';
 import './App.css';
+
+const AUTO_REFRESH_INTERVAL_MS = 30000;
 
 export default function App() {
   const [graph, setGraph] = useState(() => parseNetworkJSON(sampleData));
@@ -21,7 +24,19 @@ export default function App() {
   const [view, setView] = useState('topology');
   const [overrides, setOverrides] = useState({});
   const controlsRef = useRef(null);
-  const { liveStatus, checking, backendAvailable, attempted, checkNow } = useLiveStatus();
+  const {
+    liveStatus,
+    checking,
+    backendAvailable,
+    attempted,
+    checkNow,
+    history,
+    alerts,
+    dismissAlert,
+    clearAlerts,
+    autoRefresh,
+    setAutoRefresh,
+  } = useLiveStatus();
 
   const overriddenNodes = useMemo(
     () => mergeNodesWithOverrides(graph.nodes, overrides),
@@ -31,6 +46,23 @@ export default function App() {
     () => mergeLiveStatus(overriddenNodes, liveStatus),
     [overriddenNodes, liveStatus]
   );
+
+  const latestDevicesRef = useRef(overriddenNodes);
+  useEffect(() => {
+    latestDevicesRef.current = overriddenNodes;
+  }, [overriddenNodes]);
+
+  useEffect(() => {
+    if (!autoRefresh) return undefined;
+    const id = setInterval(() => checkNow(latestDevicesRef.current), AUTO_REFRESH_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [autoRefresh, checkNow]);
+
+  const deviceNameById = useMemo(() => {
+    const map = new Map();
+    mergedNodes.forEach((n) => map.set(n.id, n.name));
+    return map;
+  }, [mergedNodes]);
 
   const loadJSON = useCallback((jsonData, meta = {}) => {
     try {
@@ -130,6 +162,8 @@ export default function App() {
           backendAvailable={backendAvailable}
           attempted={attempted}
           onCheckNow={() => checkNow(overriddenNodes)}
+          autoRefresh={autoRefresh}
+          onAutoRefreshChange={setAutoRefresh}
         />
 
         <div className="view-controls">
@@ -211,8 +245,16 @@ export default function App() {
       <DeviceDetailPanel
         device={selectedDevice}
         override={selectedDevice ? overrides[selectedDevice.id] : undefined}
+        history={selectedDevice ? history.filter((h) => h.id === selectedDevice.id).slice(-15) : []}
         onSave={handleSaveOverride}
         onResetOverride={handleResetOverride}
+      />
+
+      <AlertsPanel
+        alerts={alerts}
+        getDeviceName={(id) => deviceNameById.get(id)}
+        onDismiss={dismissAlert}
+        onClearAll={clearAlerts}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import StatusHistoryStrip from './StatusHistoryStrip';
 
 const KNOWN_FIELDS = new Set([
   'id',
@@ -51,7 +52,7 @@ function Row({ label, children }) {
   );
 }
 
-export default function DeviceDetailPanel({ device, override, onSave, onResetOverride }) {
+export default function DeviceDetailPanel({ device, override, history, onSave, onResetOverride }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: '', ports: '', remarks: '', tags: '' });
 
@@ -179,6 +180,11 @@ export default function DeviceDetailPanel({ device, override, onSave, onResetOve
               )}
               {override?.updatedAt && (
                 <Row label="Last edited">{new Date(override.updatedAt).toLocaleString()}</Row>
+              )}
+              {history?.length > 0 && (
+                <Row label="Recent checks">
+                  <StatusHistoryStrip entries={history} />
+                </Row>
               )}
             </div>
 
