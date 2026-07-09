@@ -734,3 +734,28 @@ button:hover,
 .changelog-diff-list li {
   padding: 3px 0;
 }
+
+.compare-section {
+  display: flex;
+  align-items: center;
+}
+
+.modal-body h4 {
+  margin: 14px 0 6px;
+  color: #333;
+  font-size: 14px;
+}
+
+.modal-body h4:first-child {
+  margin-top: 0;
+}
+
+.tag-chip-added {
+  background: #e6f7e9;
+  color: #28a745;
+}
+
+.tag-chip-removed {
+  background: #fdecea;
+  color: #dc3545;
+}

@@ -8,6 +8,7 @@ import OverridesControls from './components/OverridesControls';
 import LiveStatusControls from './components/LiveStatusControls';
 import AlertsPanel from './components/AlertsPanel';
 import OverridesChangelog from './components/OverridesChangelog';
+import CompareSnapshot from './components/CompareSnapshot';
 import { parseNetworkJSON } from './data/parseNetworkJSON';
 import { sampleData } from './data/sampleData';
 import { mergeNodesWithOverrides } from './data/mergeOverrides';
@@ -156,6 +157,8 @@ export default function App() {
 
       <div className="controls">
         <SourceLoader onLoad={loadJSON} onError={setError} />
+
+        <CompareSnapshot currentNodes={graph.nodes} onError={setError} />
 
         <OverridesControls
           overrides={overrides}
