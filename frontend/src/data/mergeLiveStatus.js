@@ -9,6 +9,7 @@ export function mergeLiveStatus(nodes, liveStatus) {
       liveReachable: live.reachable,
       liveCheckedAt: live.checkedAt,
       liveError: live.error,
+      liveOpenPorts: live.openPorts,
     };
   });
 }

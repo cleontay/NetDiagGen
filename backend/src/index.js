@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { isPrivateIPv4 } from './isPrivateIp.js';
-import { checkDeviceReachable } from './statusCheck.js';
+import { scanDevice } from './statusCheck.js';
 import { mapWithConcurrency } from './concurrency.js';
 
 const MAX_DEVICES_PER_REQUEST = 100;
@@ -40,8 +40,8 @@ app.post('/api/status-check', async (req, res) => {
     if (!isPrivateIPv4(device.ip)) {
       return { id: device.id, error: 'only private IP ranges can be checked' };
     }
-    const reachable = await checkDeviceReachable(device.ip, device.ports);
-    return { id: device.id, reachable, checkedAt: new Date().toISOString() };
+    const { reachable, openPorts } = await scanDevice(device.ip, device.ports);
+    return { id: device.id, reachable, openPorts, checkedAt: new Date().toISOString() };
   });
 
   res.json({ results });

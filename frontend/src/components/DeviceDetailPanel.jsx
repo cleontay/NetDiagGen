@@ -17,6 +17,7 @@ const KNOWN_FIELDS = new Set([
   'liveReachable',
   'liveCheckedAt',
   'liveError',
+  'liveOpenPorts',
 ]);
 
 function parsePorts(input) {
@@ -110,7 +111,7 @@ export default function DeviceDetailPanel({ device, override, history, onSave, o
               />
             </label>
             <label>
-              Open ports (comma-separated)
+              Open ports (declared, comma-separated)
               <input
                 type="text"
                 placeholder="e.g. 22, 80, 443"
@@ -167,7 +168,10 @@ export default function DeviceDetailPanel({ device, override, history, onSave, o
                 </Row>
               )}
               {device.liveError && <Row label="Live check error">{device.liveError}</Row>}
-              {device.ports?.length > 0 && <Row label="Open ports">{device.ports.join(', ')}</Row>}
+              {device.liveOpenPorts?.length > 0 && (
+                <Row label="Open ports (live scan)">{device.liveOpenPorts.join(', ')}</Row>
+              )}
+              {device.ports?.length > 0 && <Row label="Open ports (declared)">{device.ports.join(', ')}</Row>}
               {device.remarks && <Row label="Remarks">{device.remarks}</Row>}
               {device.tags?.length > 0 && (
                 <Row label="Tags">
