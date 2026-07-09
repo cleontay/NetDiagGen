@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { getNodeIcon } from '../data/nodeIcons';
 
 const COLUMNS = [
   { key: 'name', label: 'Name' },
@@ -22,7 +23,7 @@ export default function DashboardView({ nodes, selectedId, onSelectDevice, onBul
   const hasLiveStatus = nodes.some((n) => n.liveReachable !== undefined);
   const hasTags = nodes.some((n) => n.tags?.length > 0);
   const columnCount =
-    1 + COLUMNS.length + (hasNetworks ? 1 : 0) + (hasLiveStatus ? 1 : 0) + (hasTags ? 1 : 0);
+    2 + COLUMNS.length + (hasNetworks ? 1 : 0) + (hasLiveStatus ? 1 : 0) + (hasTags ? 1 : 0);
   const types = useMemo(() => [...new Set(nodes.map((n) => n.type).filter(Boolean))].sort(), [nodes]);
   const allTags = useMemo(
     () => [...new Set(nodes.flatMap((n) => n.tags ?? []))].sort(),
@@ -162,6 +163,7 @@ export default function DashboardView({ nodes, selectedId, onSelectDevice, onBul
               <th className="checkbox-col">
                 <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} />
               </th>
+              <th className="icon-col" />
               {COLUMNS.map((col) => (
                 <th key={col.key} onClick={() => toggleSort(col.key)}>
                   {col.label}
@@ -182,6 +184,9 @@ export default function DashboardView({ nodes, selectedId, onSelectDevice, onBul
               >
                 <td className="checkbox-col" onClick={(e) => e.stopPropagation()}>
                   <input type="checkbox" checked={selectedIds.has(n.id)} onChange={() => toggleRowSelected(n.id)} />
+                </td>
+                <td className="icon-col">
+                  <img className="row-icon" src={getNodeIcon(n)} alt="" width={22} height={22} />
                 </td>
                 <td>{n.name}</td>
                 <td>{n.type}</td>

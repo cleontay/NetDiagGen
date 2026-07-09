@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import StatusHistoryStrip from './StatusHistoryStrip';
+import { getNodeIcon } from '../data/nodeIcons';
 
 const KNOWN_FIELDS = new Set([
   'id',
@@ -12,6 +13,7 @@ const KNOWN_FIELDS = new Set([
   'ports',
   'remarks',
   'tags',
+  'icon',
   'parent',
   'isNetworkGroup',
   'liveReachable',
@@ -20,6 +22,8 @@ const KNOWN_FIELDS = new Set([
   'liveError',
   'liveOpenPorts',
 ]);
+
+const MAX_ICON_BYTES = 200 * 1024;
 
 function parsePorts(input) {
   return [...new Set(
@@ -56,16 +60,19 @@ function Row({ label, children }) {
 
 export default function DeviceDetailPanel({ device, override, history, onSave, onResetOverride }) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: '', ports: '', remarks: '', tags: '' });
+  const [form, setForm] = useState({ name: '', ports: '', remarks: '', tags: '', icon: '' });
+  const [iconError, setIconError] = useState(null);
 
   useEffect(() => {
     setEditing(false);
+    setIconError(null);
     if (device) {
       setForm({
         name: device.name ?? '',
         ports: (device.ports ?? []).join(', '),
         remarks: device.remarks ?? '',
         tags: (device.tags ?? []).join(', '),
+        icon: device.icon ?? '',
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,8 +97,30 @@ export default function DeviceDetailPanel({ device, override, history, onSave, o
       ports: parsePorts(form.ports),
       remarks: form.remarks.trim(),
       tags: parseTags(form.tags),
+      icon: form.icon,
     });
     setEditing(false);
+  };
+
+  const handleIconFile = (event) => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    setIconError(null);
+
+    if (!file.type.startsWith('image/')) {
+      setIconError('Please choose an image file.');
+      return;
+    }
+    if (file.size > MAX_ICON_BYTES) {
+      setIconError(`Image too large (max ${Math.round(MAX_ICON_BYTES / 1024)}KB).`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => setForm((f) => ({ ...f, icon: e.target.result }));
+    reader.onerror = () => setIconError('Could not read that file.');
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -103,6 +132,33 @@ export default function DeviceDetailPanel({ device, override, history, onSave, o
       <div id="infoContent">
         {editing ? (
           <div className="edit-form">
+            <div className="icon-upload-row">
+              <img
+                className="icon-preview"
+                src={form.icon || getNodeIcon(device)}
+                alt=""
+                width={48}
+                height={48}
+              />
+              <div className="icon-upload-controls">
+                <label className="overrides-btn" htmlFor="iconUpload">
+                  Upload Icon
+                </label>
+                <input
+                  id="iconUpload"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleIconFile}
+                />
+                {form.icon && (
+                  <button type="button" onClick={() => setForm((f) => ({ ...f, icon: '' }))}>
+                    Remove
+                  </button>
+                )}
+                {iconError && <div className="icon-error">{iconError}</div>}
+              </div>
+            </div>
             <label>
               Name
               <input
@@ -146,7 +202,10 @@ export default function DeviceDetailPanel({ device, override, history, onSave, o
           </div>
         ) : (
           <>
-            <div className="detail-title">{device.name}</div>
+            <div className="detail-title">
+              <img className="icon-preview" src={getNodeIcon(device)} alt="" width={32} height={32} />
+              {device.name}
+            </div>
 
             <div className="detail-grid">
               <Row label="ID">{device.id}</Row>

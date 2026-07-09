@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import cytoscape from 'cytoscape';
-import { getNodeColor } from '../data/nodeColors';
-import { getNodeShape } from '../data/nodeShapes';
+import { getStatusColors } from '../data/nodeColors';
+import { getNodeIcon } from '../data/nodeIcons';
 
 function toElements(nodes, edges) {
   const elements = [];
@@ -48,24 +48,30 @@ const style = [
     style: {
       label: 'data(name)',
       'font-size': '12px',
-      'text-valign': 'center',
+      'text-valign': 'bottom',
       'text-halign': 'center',
-      color: '#fff',
-      'text-outline-width': 2,
-      'text-outline-color': '#333',
-      'border-width': 3,
-      'border-color': '#fff',
+      'text-margin-y': 8,
+      color: '#333',
+      'text-outline-width': 0,
     },
   },
   {
-    // Leaf device nodes: colored/shaped by type+status. Compound network
-    // group nodes (below) are excluded so they can auto-size to their children.
+    // Leaf device nodes: a type/custom icon on a status-colored badge.
+    // Compound network group nodes (below) are excluded so they can
+    // auto-size to their children.
     selector: 'node:childless',
     style: {
-      'background-color': (el) => getNodeColor(el.data('type'), el.data('status')),
-      shape: (el) => getNodeShape(el.data('type')),
-      width: 'mapData(name.length, 1, 20, 40, 80)',
-      height: 'mapData(name.length, 1, 20, 40, 80)',
+      shape: 'round-rectangle',
+      width: 56,
+      height: 56,
+      'background-color': (el) => getStatusColors(el.data('status')).bg,
+      'border-width': 3,
+      'border-color': (el) => getStatusColors(el.data('status')).border,
+      'background-image': (el) => getNodeIcon(el.data()),
+      'background-fit': 'contain',
+      'background-clip': 'none',
+      'background-width': '62%',
+      'background-height': '62%',
     },
   },
   {

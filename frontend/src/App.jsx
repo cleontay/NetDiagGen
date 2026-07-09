@@ -9,6 +9,7 @@ import LiveStatusControls from './components/LiveStatusControls';
 import AlertsPanel from './components/AlertsPanel';
 import OverridesChangelog from './components/OverridesChangelog';
 import CompareSnapshot from './components/CompareSnapshot';
+import { getDefaultIcon } from './data/nodeIcons';
 import { parseNetworkJSON } from './data/parseNetworkJSON';
 import { sampleData } from './data/sampleData';
 import { mergeNodesWithOverrides } from './data/mergeOverrides';
@@ -228,25 +229,31 @@ export default function App() {
       {view === 'topology' && (
         <div className="legend">
           <h3>Legend</h3>
-          <p className="legend-hint">Color = status, shape = device type. Dashed boxes group devices by network.</p>
+          <p className="legend-hint">
+            Border color = status. Icon = device type (or a custom uploaded icon). Dashed boxes group
+            devices by network.
+          </p>
           <div className="legend-items">
             <div>
-              <span className="legend-color" style={{ background: '#4CAF50' }} /> Online
+              <span className="legend-swatch" style={{ borderColor: '#28a745', background: '#e6f7e9' }} /> Online
             </div>
             <div>
-              <span className="legend-color" style={{ background: '#f44336' }} /> Offline
+              <span className="legend-swatch" style={{ borderColor: '#dc3545', background: '#fdecea' }} /> Offline
             </div>
             <div>
-              <span className="legend-color legend-diamond" style={{ background: '#FF9800' }} /> Router
+              <img className="legend-icon" src={getDefaultIcon('router')} alt="" /> Router
             </div>
             <div>
-              <span className="legend-color legend-square" style={{ background: '#2196F3' }} /> Server
+              <img className="legend-icon" src={getDefaultIcon('server')} alt="" /> Server
             </div>
             <div>
-              <span className="legend-color" style={{ background: '#9C27B0' }} /> Workstation
+              <img className="legend-icon" src={getDefaultIcon('workstation')} alt="" /> Workstation
             </div>
             <div>
-              <span className="legend-color legend-triangle" style={{ background: '#607D8B' }} /> IoT/Other
+              <img className="legend-icon" src={getDefaultIcon('iot')} alt="" /> IoT
+            </div>
+            <div>
+              <img className="legend-icon" src={getDefaultIcon('other')} alt="" /> Other
             </div>
           </div>
         </div>

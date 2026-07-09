@@ -76,3 +76,11 @@ The app accepts several shapes:
 
 Each node supports arbitrary extra fields beyond `id`/`name`/`type`/`status`/`ip`
 — anything else present is shown in the device detail panel.
+
+## Icons
+
+Devices are shown with a default pictogram per type (router/server/
+workstation/iot/other). Any device can be given a custom icon from its edit
+form — upload an image (max 200KB) and it's stored as a data URI in that
+device's override, so it travels with `overrides.json` like any other edit.
+Remove it to fall back to the default type icon.
