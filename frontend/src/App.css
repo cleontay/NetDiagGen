@@ -668,3 +668,69 @@ button:hover,
   transform: none;
   box-shadow: none;
 }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h3 {
+  color: #333;
+}
+
+.modal-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.changelog-entry {
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.changelog-entry:last-child {
+  border-bottom: none;
+}
+
+.changelog-entry-header {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.changelog-diff-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  color: #444;
+}
+
+.changelog-diff-list li {
+  padding: 3px 0;
+}

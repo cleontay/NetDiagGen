@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-export default function OverridesControls({ overrides, onImport, onError }) {
+export default function OverridesControls({ overrides, onImport, onError, onOpenChangelog }) {
   const fileRef = useRef(null);
   const hasOverrides = Object.keys(overrides).length > 0;
 
@@ -33,6 +33,9 @@ export default function OverridesControls({ overrides, onImport, onError }) {
     <div className="overrides-section">
       <button className="overrides-btn" onClick={handleExport} disabled={!hasOverrides}>
         Export Overrides
+      </button>
+      <button className="overrides-btn" onClick={onOpenChangelog} disabled={!hasOverrides}>
+        View Changelog
       </button>
       <label className="overrides-btn" htmlFor="overridesUpload">
         Import Overrides

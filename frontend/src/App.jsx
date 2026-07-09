@@ -7,6 +7,7 @@ import SourceLoader from './components/SourceLoader';
 import OverridesControls from './components/OverridesControls';
 import LiveStatusControls from './components/LiveStatusControls';
 import AlertsPanel from './components/AlertsPanel';
+import OverridesChangelog from './components/OverridesChangelog';
 import { parseNetworkJSON } from './data/parseNetworkJSON';
 import { sampleData } from './data/sampleData';
 import { mergeNodesWithOverrides } from './data/mergeOverrides';
@@ -23,6 +24,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [view, setView] = useState('topology');
   const [overrides, setOverrides] = useState({});
+  const [showChangelog, setShowChangelog] = useState(false);
   const controlsRef = useRef(null);
   const {
     liveStatus,
@@ -155,7 +157,12 @@ export default function App() {
       <div className="controls">
         <SourceLoader onLoad={loadJSON} onError={setError} />
 
-        <OverridesControls overrides={overrides} onImport={handleImportOverrides} onError={setError} />
+        <OverridesControls
+          overrides={overrides}
+          onImport={handleImportOverrides}
+          onError={setError}
+          onOpenChangelog={() => setShowChangelog(true)}
+        />
 
         <LiveStatusControls
           checking={checking}
@@ -255,6 +262,13 @@ export default function App() {
         getDeviceName={(id) => deviceNameById.get(id)}
         onDismiss={dismissAlert}
         onClearAll={clearAlerts}
+      />
+
+      <OverridesChangelog
+        open={showChangelog}
+        overrides={overrides}
+        baseNodes={graph.nodes}
+        onClose={() => setShowChangelog(false)}
       />
     </div>
   );
