@@ -1,18 +1,168 @@
 # NetDiagGen
 
-Network diagram visualizer from JSON.
+A network diagram generator: load a JSON description of your network and get
+an interactive topology map and a sortable dashboard, with editable device
+metadata, live reachability checks, and exportable diagrams — all from a
+JSON file, no database required.
 
-## Structure
+## Table of contents
 
-- `frontend/` — React + Vite app. Visualizes network topology and device
-  status from uploaded or bundled JSON, with editable device metadata
-  (name, ports, remarks) and a dashboard/topology toggle.
-- `backend/` — minimal Express service with a single `/api/status-check`
-  endpoint that performs live reachability checks, since browsers can't
-  probe arbitrary hosts directly. Optional — the frontend works without it,
-  just without live status.
+- [Summary](#summary)
+- [Features](#features)
+- [Core structure](#core-structure)
+- [Installation](#installation)
+- [Usage guide](#usage-guide)
+- [JSON format](#json-format)
+- [Configuration](#configuration)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-## Development
+## Summary
+
+NetDiagGen is a two-part app:
+
+- **`frontend/`** — a React + Vite single-page app. This is the whole
+  product for most use cases: load a JSON file describing your devices and
+  the connections between them, and it renders an interactive topology
+  diagram and a dashboard, lets you annotate devices, and exports what you
+  build. Works entirely client-side — no backend or database needed for
+  this part.
+- **`backend/`** — a small, optional Express service with one job: check
+  whether devices are actually online right now (ICMP ping + TCP port
+  scan), since a browser can't do that on its own. If you don't run it,
+  everything else still works — you just won't have live status.
+
+There is intentionally no database and no login system. Your edits (device
+renames, remarks, tags, custom icons) live in the browser's memory for the
+session and can be saved out as a small `overrides.json` file, which you
+re-import later to restore them. This keeps the tool a "drop in a JSON file
+and go" experience rather than something that needs an account or server
+setup.
+
+## Features
+
+**Loading data**
+- Upload a JSON file directly
+- Pick from a folder of JSON files bundled with the app (`frontend/public/sources/`)
+- Point at a local folder on your machine (Chromium browsers only)
+- Load the built-in sample network to try the app immediately
+
+**Visualizing the network**
+- Interactive topology diagram (pan/zoom/drag) built on Cytoscape.js
+- Dashboard view: a searchable, sortable, filterable table of every device
+- Toggle between the two views without losing your selection
+- Devices are grouped into dashed boxes automatically when the source JSON
+  defines more than one network/segment
+- Each device shows an icon for its type (router/server/workstation/IoT/
+  other) with a colored border/background for status (green = online,
+  red = offline, gray = unknown)
+
+**Editing devices**
+- Rename a device, add open ports, write freeform remarks, and tag it —
+  all from a detail panel that opens when you click a device
+- Upload a custom icon per device (overrides the default type icon)
+- Bulk-edit: select multiple rows in the dashboard and tag/annotate them
+  all at once
+- Every edit is tracked with a timestamp; a changelog view lists exactly
+  what changed and when
+- "Reset to original" undoes an edit back to what the source JSON said
+
+**Live status checking** (requires the optional backend)
+- On-demand or auto-refreshing (every 30s) reachability checks
+- Combines a real ICMP ping with a TCP port scan for a robust "is it
+  actually up" signal, distinct from whatever status the JSON reported
+- Reports which specific ports are open, not just "reachable"
+- Pop-up alerts when a device flips online↔offline
+- A small per-device history strip showing the last 15 checks
+
+**Sharing and comparing**
+- Export the topology as a PNG image
+- Print / Save as PDF via the browser's native print dialog
+- Export/import your edits as `overrides.json` to carry them between sessions
+- Compare two JSON snapshots to see what devices were added, removed, or
+  changed since the last one
+
+## Core structure
+
+```
+NetDiagGen/
+├── frontend/                    React + Vite app (the main product)
+│   ├── public/
+│   │   ├── favicon.svg
+│   │   └── sources/              Bundled JSON files pickable from the UI
+│   │       ├── manifest.json          lists the files below
+│   │       ├── sample-network.json
+│   │       └── sample-multi-network.json
+│   └── src/
+│       ├── main.jsx               React entry point
+│       ├── App.jsx                top-level layout, state, and wiring
+│       ├── App.css / index.css    all styling
+│       ├── components/            UI pieces (one file per feature)
+│       │   ├── TopologyView.jsx        the Cytoscape diagram
+│       │   ├── DashboardView.jsx       the sortable/filterable table
+│       │   ├── DeviceDetailPanel.jsx   view/edit a single device
+│       │   ├── SourceLoader.jsx        upload / sources / local folder
+│       │   ├── OverridesControls.jsx   export/import edits, changelog button
+│       │   ├── OverridesChangelog.jsx  modal listing every edit made
+│       │   ├── LiveStatusControls.jsx  check-now / auto-refresh toggle
+│       │   ├── AlertsPanel.jsx         floating panel for status flips
+│       │   ├── StatusHistoryStrip.jsx  per-device check history dots
+│       │   ├── CompareSnapshot.jsx     diff two JSON snapshots
+│       │   └── StatsBar.jsx            node/edge/online/offline counts
+│       ├── data/                  pure helper functions, no React
+│       │   ├── parseNetworkJSON.js     normalizes the accepted JSON shapes
+│       │   ├── mergeOverrides.js       layers edits onto base device data
+│       │   ├── mergeLiveStatus.js      layers live-check results on top
+│       │   ├── diffOverride.js         computes a before/after for the changelog
+│       │   ├── diffSnapshots.js        computes added/removed/changed between two loads
+│       │   ├── nodeIcons.js            type → default icon, custom icon override
+│       │   ├── nodeColors.js           status → color
+│       │   └── sampleData.js           the built-in demo network
+│       ├── hooks/
+│       │   ├── useLiveStatus.js        talks to the backend, tracks history/alerts
+│       │   ├── useSourceManifest.js    fetches public/sources/manifest.json
+│       │   └── useLocalFolder.js       wraps the File System Access API
+│       └── assets/icons/          the default per-type SVG pictograms
+│
+├── backend/                      Optional Express service (live status only)
+│   └── src/
+│       ├── index.js                Express app, the /api/status-check route
+│       ├── pingCheck.js            shells out to the system `ping` command
+│       ├── statusCheck.js          TCP port scan (open/closed/filtered)
+│       ├── isPrivateIp.js          restricts checks to private IP ranges
+│       └── concurrency.js          small helper to bound parallel checks
+│
+└── .github/workflows/            GitHub Pages deploy workflow (frontend only)
+```
+
+**How data flows through the app:** whatever JSON you load becomes
+`graph.nodes`/`graph.edges` in `App.jsx`. Your edits are stored separately
+as `overrides` (keyed by device id) and layered on top by
+`mergeOverrides.js`; live-check results are layered on top of *that* by
+`mergeLiveStatus.js`. The result (`mergedNodes`) is what both the topology
+and dashboard views actually render — the original loaded JSON is never
+mutated, which is what makes "Reset to original" and the changelog possible.
+
+## Installation
+
+**Prerequisites:** [Node.js](https://nodejs.org) `^20.19.0` or `>=22.12.0`
+(required by the Vite 8 toolchain the frontend uses — this project was
+built and tested on Node 22.22) and npm, which comes bundled with it. No
+database, no Docker, no accounts required. Check your version with:
+
+```bash
+node --version
+```
+
+### 1. Get the code
+
+```bash
+git clone <this-repo-url>
+cd NetDiagGen
+```
+
+### 2. Run the app (frontend only — this is enough to use NetDiagGen)
 
 ```bash
 cd frontend
@@ -20,7 +170,13 @@ npm install
 npm run dev
 ```
 
-To enable live status checks, also run the backend:
+Open the URL it prints (usually `http://localhost:5173`). You'll see the
+app already loaded with sample data — you're done. Everything except live
+status checking works right now.
+
+### 3. (Optional) Run the backend for live status checks
+
+Open a **second terminal**, leave the frontend running in the first one:
 
 ```bash
 cd backend
@@ -28,59 +184,169 @@ npm install
 npm start
 ```
 
-The frontend looks for the backend at `http://localhost:4000` by default;
-override with `VITE_STATUS_API_URL` if it runs elsewhere. Status checks are
-restricted to private IP ranges (RFC1918, loopback, link-local) — the
-backend refuses to probe public addresses.
+This starts on `http://localhost:4000` by default. The frontend
+automatically looks for it there — no configuration needed for local use.
+Go back to the app and click **"Check Live Status"**; if you don't run this
+step, that button will just show a small "backend unavailable" notice and
+everything else keeps working normally.
 
-Liveness combines two signals: a real ICMP ping (shells out to the system
-`ping` command) and a TCP port scan. If `ping` isn't installed on the
-backend's host (common on minimal/containerized environments), the ICMP
-result reports as "not available" rather than "down", and reachability
-falls back to the TCP scan alone — install `iputils-ping` (Debian/Ubuntu)
-or equivalent if you want the ICMP signal.
+That's the whole install. There's nothing to build, migrate, or seed —
+`npm run dev` and (optionally) `npm start` is the entire setup.
 
-## Deployment
+## Usage guide
 
-**Frontend** builds to static files and can be hosted anywhere
-(`frontend/dist` after `npm run build`). A GitHub Actions workflow
-(`.github/workflows/deploy-frontend.yml`) is included to publish it to
-GitHub Pages on every push to `main` that touches `frontend/`. It only
-takes effect once Pages is enabled for this repo (Settings → Pages →
-Source: "GitHub Actions") — nothing is published automatically until
-that's turned on. If you deploy the backend somewhere and want the
-GitHub Pages build to use it, set a repository variable
-`STATUS_API_URL` (Settings → Secrets and variables → Actions → Variables)
-to its URL before the workflow runs.
+**1. Load a network.** On first load you already see the sample network.
+To load your own: click **Upload JSON File** and pick a file, or use the
+**Sources folder** dropdown if your team has bundled files into
+`frontend/public/sources/`, or click **Choose Local Folder** (Chrome/Edge
+only) to browse a folder on disk without uploading anything.
 
-For Netlify/Vercel instead: point them at `frontend/`, build command
-`npm run build`, publish directory `dist`. They serve from the root, so
-no base-path configuration is needed (that's GitHub Pages-specific).
+**2. Explore it.** Use the **Topology View** / **Dashboard View** tabs at
+the top of the graph area to switch how you look at the same data. In the
+topology view you can zoom, drag nodes around, and switch between grid and
+circle layouts. In the dashboard, use the search box and the status/type/
+tag dropdowns to narrow down the list, and click any column header to sort.
 
-**Backend** (only needed for live status checks) is a plain Node/Express
-process — deploy it anywhere that runs Node (Render, Fly.io, a small VPS,
-etc.) and point the frontend at it via `VITE_STATUS_API_URL` at build
-time. If it's not deployed or not reachable, the frontend degrades
-gracefully to showing only the status reported in the loaded JSON.
+**3. Click a device** (a node in the diagram, or a row in the dashboard) to
+open its detail panel at the bottom of the page. Click **Edit** there to
+rename it, list its open ports, add remarks, tag it, or upload a custom
+icon. Click **Save**. An "Edited" badge appears anywhere that device shows
+up, and **Reset to original** is available if you want to undo it.
+
+**4. Bulk-edit** by switching to the dashboard, ticking the checkboxes next
+to several rows, and using the bar that appears above the table to add tags
+or set remarks on all of them at once.
+
+**5. Check what's actually online.** Click **Check Live Status** (requires
+the backend running — see Installation step 3). Tick **Auto-refresh (30s)**
+to keep it current automatically. If a device's status flips while you're
+watching, a small alert pops up in the bottom-right corner.
+
+**6. Save your work.** Your edits aren't written back into the original
+JSON file — click **Export Overrides** to download them as `overrides.json`.
+Next time you load the same network, click **Import Overrides** and pick
+that file to bring all your edits back.
+
+**7. Share or archive.** Use **Export PNG** to save the current diagram as
+an image, or **Print / Save as PDF** to use your browser's print dialog.
+
+**8. Compare two scans.** If you have two JSON exports of the same network
+taken at different times, load the first one normally, then click
+**Compare Snapshot** and pick the second file to see exactly what changed.
 
 ## JSON format
 
-The app accepts several shapes:
+NetDiagGen accepts several shapes so it can work with output from different
+tools — pick whichever matches what you already have:
 
 ```json
 { "nodes": [...], "edges": [...] }
 { "devices": [...], "connections": [...] }
 { "hosts": [...], "links": [...] }
-{ "networks": [ { "id": "...", "name": "...", "nodes": [...], "edges": [...] } ] }
 ```
 
-Each node supports arbitrary extra fields beyond `id`/`name`/`type`/`status`/`ip`
-— anything else present is shown in the device detail panel.
+Or, for a network made of multiple segments (each gets its own dashed box
+in the topology view):
 
-## Icons
+```json
+{
+  "networks": [
+    { "id": "office-lan", "name": "Office LAN", "nodes": [...], "edges": [...] }
+  ]
+}
+```
 
-Devices are shown with a default pictogram per type (router/server/
-workstation/iot/other). Any device can be given a custom icon from its edit
-form — upload an image (max 200KB) and it's stored as a data URI in that
-device's override, so it travels with `overrides.json` like any other edit.
-Remove it to fall back to the default type icon.
+A minimal device (node) looks like this — `id` is the only strictly
+required field, everything else is optional:
+
+```json
+{
+  "id": "router1",
+  "name": "Main Router",
+  "type": "router",
+  "status": "online",
+  "ip": "192.168.1.1"
+}
+```
+
+- `type` drives the icon (`router`, `server`, `workstation`, `iot`; anything
+  else gets a generic icon)
+- `status` drives the color (`online` / `offline`; anything else shows as
+  "unknown")
+- `ip` is what's used for live status checks
+- **any other field you include** (`os`, `model`, `owner`, whatever) is kept
+  and shown automatically in the device detail panel — you don't need to
+  register custom fields anywhere
+
+An edge/connection just needs `source` and `target` matching two device
+ids:
+
+```json
+{ "source": "router1", "target": "server1" }
+```
+
+See `frontend/public/sources/sample-network.json` and
+`sample-multi-network.json` for complete working examples.
+
+## Configuration
+
+The only setting most people need is where the frontend looks for the
+backend. By default it's `http://localhost:4000`. To point it elsewhere
+(e.g. a deployed backend), set an environment variable before building the
+frontend:
+
+```bash
+VITE_STATUS_API_URL=https://your-backend.example.com npm run build
+```
+
+The backend itself reads `PORT` (defaults to `4000`) if you need it to
+listen elsewhere.
+
+## Deployment
+
+**Frontend** builds to plain static files:
+
+```bash
+cd frontend
+npm run build   # outputs to frontend/dist
+```
+
+Host `frontend/dist` anywhere that serves static files. A GitHub Actions
+workflow (`.github/workflows/deploy-frontend.yml`) is included to publish
+it to GitHub Pages automatically on every push to `main` — it only takes
+effect once Pages is enabled for this repo (repo Settings → Pages → Source:
+"GitHub Actions"); nothing publishes until you turn that on. For Netlify or
+Vercel instead, point them at the `frontend/` directory with build command
+`npm run build` and publish directory `dist`.
+
+**Backend** is a plain Node process — deploy it anywhere that runs Node
+(Render, Fly.io, a small VPS, etc.), then point your deployed frontend at
+it via `VITE_STATUS_API_URL` (see Configuration above). If it's ever
+unreachable, the frontend just shows a small warning and keeps working off
+whatever status the loaded JSON reported.
+
+## Troubleshooting
+
+- **"Check Live Status" shows a warning / does nothing** — the backend
+  isn't running or isn't reachable at the configured URL. Start it with
+  `cd backend && npm start`, or check `VITE_STATUS_API_URL` if you're
+  running it somewhere other than `localhost:4000`.
+- **ICMP ping always shows "Not available"** — the `ping` command isn't
+  installed on the machine running the backend (common in minimal
+  containers). Install `iputils-ping` (Debian/Ubuntu) or your platform's
+  equivalent. Reachability still works via the TCP scan in the meantime.
+- **"Choose Local Folder" button is missing** — that feature (the File
+  System Access API) only exists in Chromium-based browsers (Chrome, Edge).
+  Use "Upload JSON File" instead in Firefox/Safari.
+- **My edits disappeared** — edits live in the browser tab's memory only
+  and are not saved automatically. Use **Export Overrides** before closing
+  the tab or loading a different network, and **Import Overrides** to bring
+  them back.
+- **Status check says "only private IP ranges can be checked"** — this is
+  intentional: the backend refuses to probe public IP addresses so it can't
+  be used to scan the internet. Only RFC1918/loopback/link-local addresses
+  (e.g. `192.168.x.x`, `10.x.x.x`, `127.0.0.1`) are checked.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
