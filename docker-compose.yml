@@ -1,0 +1,21 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked in at build time (Vite requirement) — override in a .env
+        # file at the repo root if the backend won't be reachable at
+        # localhost:4000 from wherever your browser runs (e.g. deploying
+        # these containers to a remote host).
+        VITE_STATUS_API_URL: ${VITE_STATUS_API_URL:-http://localhost:4000}
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
