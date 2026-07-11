@@ -255,6 +255,29 @@ docker build -t netdiaggen-backend ./backend
 docker run -p 4000:4000 netdiaggen-backend
 ```
 
+### Pre-built images
+
+A GitHub Actions workflow (`.github/workflows/docker-build.yml`) builds both
+images and publishes them to GitHub Container Registry automatically — on
+every push to `main` that touches `frontend/` or `backend/`, on published
+GitHub releases (tagged with the release version), and on demand via the
+Actions tab ("Run workflow"). No image building required on your end:
+
+```bash
+docker pull ghcr.io/cleontay/netdiaggen-frontend:latest
+docker run -p 8080:80 ghcr.io/cleontay/netdiaggen-frontend:latest
+
+docker pull ghcr.io/cleontay/netdiaggen-backend:latest
+docker run -p 4000:4000 ghcr.io/cleontay/netdiaggen-backend:latest
+```
+
+(Or reference those images directly in `docker-compose.yml` in place of the
+`build:` keys if you'd rather always run the published version.) If
+`docker pull` fails with a permission/authorization error, the package is
+still set to private — open the package's page under the repo's "Packages"
+sidebar and change its visibility to public, or `docker login ghcr.io`
+first with a personal access token that has `read:packages` scope.
+
 ## Usage guide
 
 **1. Load a network.** On first load you already see the sample network.
